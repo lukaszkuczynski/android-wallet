@@ -7,9 +7,12 @@ import android.location.Location;
  */
 
 class Operation {
+    private static final String OPERATION_TYPE_SPENDING = "spending";
     private final Location location;
     private double amount;
     private String description;
+    private String op_type = OPERATION_TYPE_SPENDING;
+
 
     public Operation(double amount, String description, Location location) {
         this.amount = amount;
@@ -27,5 +30,23 @@ class Operation {
 
     public Location getLocation() {
         return location;
+    }
+
+
+    public String getOp_type() {
+        return op_type;
+    }
+
+    public void setOp_type(String op_type) {
+        this.op_type = op_type;
+    }
+
+    @Override
+    public String toString() {
+        return "Operation{" +
+                "amount=" + amount +
+                ", description='" + description + '\'' +
+                ", op_type='" + op_type + '\'' +
+                '}';
     }
 }

@@ -6,6 +6,6 @@ package pl.integrator.androidwallet;
 
 public interface OperationDao {
 
-    LastState saveOperation(Operation transaction);
+    OperationResult saveOperation(Operation transaction);
 
 }

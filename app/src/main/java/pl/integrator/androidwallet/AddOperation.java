@@ -8,6 +8,6 @@ import com.amazonaws.mobileconnectors.lambdainvoker.LambdaFunction;
 public interface AddOperation {
 
     @LambdaFunction(functionName = "HelloAws")
-    public String addOperation(String jsonOperation);
+    public OperationResult addOperation(Operation jsonOperation);
 
 }

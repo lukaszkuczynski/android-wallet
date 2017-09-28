@@ -1,6 +1,7 @@
 package pl.integrator.androidwallet;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.util.Log;
 
@@ -8,6 +9,8 @@ import com.amazonaws.auth.CognitoCachingCredentialsProvider;
 import com.amazonaws.mobileconnectors.lambdainvoker.LambdaFunctionException;
 import com.amazonaws.mobileconnectors.lambdainvoker.LambdaInvokerFactory;
 import com.amazonaws.regions.Regions;
+
+import static pl.integrator.androidwallet.MainActivity.COGNITO_POOL;
 
 /**
  * Created by luk on 27.09.17.
@@ -18,16 +21,16 @@ public class LambdaOperationDao implements OperationDao {
     private static final String TAG = LambdaOperationDao.class.getCanonicalName();
     private final Context applicationContext;
 
-    private static final String COGNITO_ID = "COGNITO_ID_HERE";
     private final String cognitoPoolId;
 
-    public LambdaOperationDao(Context applicationContext) {
+    public LambdaOperationDao(Context applicationContext, SharedPreferences settings) {
         this.applicationContext = applicationContext;
-        this.cognitoPoolId = COGNITO_ID;
+        this.cognitoPoolId = settings.getString(COGNITO_POOL, "nocognito");
     }
 
     @Override
-    public LastState saveOperation(Operation transaction) {
+    public OperationResult saveOperation(Operation transaction) {
+        Log.i(TAG, "Will call lambda with cognitopoolid="+this.cognitoPoolId);
         CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
                 getApplicationContext(),
                 this.cognitoPoolId,
@@ -38,20 +41,20 @@ public class LambdaOperationDao implements OperationDao {
                 Regions.EU_CENTRAL_1,
                 credentialsProvider);
 
-        callSynchronously(factory, transaction);
-        return null;
-
+        return callSynchronously(factory, transaction);
     }
 
-    private String callSynchronously(LambdaInvokerFactory invokerFactory, Operation operation) {
-        AddOperation myInterface = invokerFactory.build(AddOperation.class);
-        String json = "{" +
-                "\"op_type\": \"spending\","+
-                "\"description\": \""+operation.getDescription()+"\","+
-                "\"amount\": "+operation.getAmount()+
-                "}";
-
-        return myInterface.addOperation(json);
+    private OperationResult callSynchronously(LambdaInvokerFactory invokerFactory, Operation operation) {
+        try {
+            Log.i(TAG, String.format("Calling with operation %s", operation.toString()));
+            AddOperation myInterface = invokerFactory.build(AddOperation.class);
+            OperationResult operationResult = myInterface.addOperation(operation);
+            Log.i(TAG, String.format("Call result %s", operationResult.toString()));
+            return operationResult;
+        } catch (Exception e) {
+            Log.e(TAG, e.getMessage());
+            throw new RuntimeException(e);
+        }
     }
 
     private String callASynchronously(LambdaInvokerFactory invokerFactory, Operation operation) {

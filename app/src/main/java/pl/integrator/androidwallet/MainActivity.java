@@ -1,31 +1,19 @@
 package pl.integrator.androidwallet;
 
-import android.content.Context;
-import android.location.Criteria;
-import android.location.Location;
-import android.location.LocationListener;
-import android.location.LocationManager;
-import android.os.AsyncTask;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Spinner;
 
-import com.amazonaws.auth.CognitoCachingCredentialsProvider;
-import com.amazonaws.mobileconnectors.lambdainvoker.LambdaFunctionException;
-import com.amazonaws.mobileconnectors.lambdainvoker.LambdaInvokerFactory;
-import com.amazonaws.regions.Regions;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static android.provider.ContactsContract.CommonDataKinds.StructuredPostal.REGION;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -33,35 +21,13 @@ public class MainActivity extends AppCompatActivity {
     private static final String TAG = MainActivity.class.getCanonicalName();
     private OperationDao operationDao;
 
-//    private Location location() throws SecurityException {
-//        LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-//
-//        Criteria criteria = new Criteria();
-//        int currentapiVersion = android.os.Build.VERSION.SDK_INT;
-//
-//
-//        if (currentapiVersion >= android.os.Build.VERSION_CODES.HONEYCOMB) {
-//
-//            criteria.setSpeedAccuracy(Criteria.ACCURACY_HIGH);
-//            criteria.setAccuracy(Criteria.ACCURACY_FINE);
-//            criteria.setAltitudeRequired(true);
-//            criteria.setBearingRequired(true);
-//            criteria.setSpeedRequired(true);
-//
-//        }
-//
-//        String provider = locationManager.getBestProvider(criteria, true);
-//        Location location = locationManager.getLastKnownLocation(provider);
-//        return location;
-//
-//
-//    }
-
+    public static final String PREFS_NAME = "AwsWalletPrefsFile";
+    public static final String COGNITO_POOL = "COGNITO_POOL_ID";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        this.operationDao = new LambdaOperationDao(this.getApplicationContext());
         super.onCreate(savedInstanceState);
+        this.operationDao = new LambdaOperationDao(this.getApplicationContext(), this.getSharedPreferences(PREFS_NAME, 0));
         setContentView(R.layout.activity_main);
 
         Button button = (Button) findViewById(R.id.save);
@@ -76,6 +42,12 @@ public class MainActivity extends AppCompatActivity {
                 "gasoline"
         };
 
+//        SharedPreferences settings = getSharedPreferences(PREFS_NAME, 0);
+//        hardcode your cognito id
+//        SharedPreferences.Editor editor = settings.edit();
+//        editor.putString(COGNITO_POOL, "YOUR_POOL_ID_HERE");
+//        editor.commit();
+
         final List<String> tagList = new ArrayList<>(Arrays.asList(tags));
 
         // Initializing an ArrayAdapter
@@ -85,19 +57,14 @@ public class MainActivity extends AppCompatActivity {
         spinnerArrayAdapter.setDropDownViewResource(R.layout.support_simple_spinner_dropdown_item);
         spinner.setAdapter(spinnerArrayAdapter);
 
-
-
-
-
-
         button.setOnClickListener((View view) -> {
 
             double amount = Double.valueOf(amountEdit.getText().toString());
             String tag = spinner.getSelectedItem().toString();
-            String snackText = String.format("Adding operation '%s' with amount of %.2f", tag, amount);
+            OperationResult operationResult = operationDao.saveOperation(new Operation(amount, tag, null));
+            String snackText = String.format("Adding operation '%s' with amount of %.2f. After that new balance is %s", tag, amount, operationResult.getAmount_after());
             Snackbar.make(view, snackText, Snackbar.LENGTH_INDEFINITE)
                     .show();
-            operationDao.saveOperation(new Operation(amount, tag, null));
 
 
 
