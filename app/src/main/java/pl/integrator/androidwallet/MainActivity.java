@@ -1,9 +1,14 @@
 package pl.integrator.androidwallet;
 
+import android.Manifest;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.support.design.widget.Snackbar;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -16,7 +21,7 @@ import java.util.List;
 
 
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements OperationResultListener {
 
     private static final String TAG = MainActivity.class.getCanonicalName();
     private OperationDao operationDao;
@@ -57,19 +62,51 @@ public class MainActivity extends AppCompatActivity {
         spinnerArrayAdapter.setDropDownViewResource(R.layout.support_simple_spinner_dropdown_item);
         spinner.setAdapter(spinnerArrayAdapter);
 
+
+//        if (ContextCompat.checkSelfPermission(this,
+//                Manifest.permission.INTERNET)
+//                != PackageManager.PERMISSION_GRANTED) {
+//
+//            // Should we show an explanation?
+//            if (ActivityCompat.shouldShowRequestPermissionRationale(this,
+//                    Manifest.permission.INTERNET)) {
+//
+//                // Show an explanation to the user *asynchronously* -- don't block
+//                // this thread waiting for the user's response! After the user
+//                // sees the explanation, try again to request the permission.
+//
+//            } else {
+//
+//                // No explanation needed, we can request the permission.
+//
+//                ActivityCompat.requestPermissions(this,
+//                        new String[]{Manifest.permission.INTERNET},
+//                        0);
+//
+//                // MY_PERMISSIONS_REQUEST_READ_CONTACTS is an
+//                // app-defined int constant. The callback method gets the
+//                // result of the request.
+//            }
+//        }
+
         button.setOnClickListener((View view) -> {
 
             double amount = Double.valueOf(amountEdit.getText().toString());
             String tag = spinner.getSelectedItem().toString();
-            OperationResult operationResult = operationDao.saveOperation(new Operation(amount, tag, null));
-            String snackText = String.format("Adding operation '%s' with amount of %.2f. After that new balance is %s", tag, amount, operationResult.getAmount_after());
-            Snackbar.make(view, snackText, Snackbar.LENGTH_INDEFINITE)
-                    .show();
-
-
+            operationDao.saveOperationAsync(new Operation(amount, tag, null), this);
+            String snackText = String.format("Adding operation '%s' with amount of %.2f. ", tag, amount);
+            Snackbar.make(view, snackText, Snackbar.LENGTH_INDEFINITE);
 
         });
 
+
+    }
+
+    @Override
+    public void onResult(OperationResult operationResult) {
+        Log.i(TAG, String.format("Result came from Lambda! Amount after %s", operationResult.getAmount_after()));
+        String snackText = String.format("After operation the new balance is %s", operationResult.getAmount_after());
+//        Snackbar.make(this.findViewById(R.id.save) , snackText, Snackbar.LENGTH_INDEFINITE);
 
     }
 }

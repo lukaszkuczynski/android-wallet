@@ -8,4 +8,5 @@ public interface OperationDao {
 
     OperationResult saveOperation(Operation transaction);
 
+    void saveOperationAsync(Operation operation, OperationResultListener listener);
 }

@@ -15,4 +15,10 @@ public class InmemoryOperationDao implements OperationDao {
         Log.i(TAG, String.format("Saving transaction with description %s and amount %s on lat %.2f",transaction.getDescription(), Double.toString(transaction.getAmount()), transaction.getLocation().getLatitude()));
         return new OperationResult();
     }
+
+    @Override
+    public void saveOperationAsync(Operation operation, OperationResultListener listener) {
+        Log.i(TAG, String.format("Saving transaction with description %s and amount %s on lat %.2f",operation.getDescription(), Double.toString(operation.getAmount()), operation.getLocation().getLatitude()));
+    }
+
 }

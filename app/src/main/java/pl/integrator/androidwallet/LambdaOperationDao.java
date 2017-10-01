@@ -25,7 +25,7 @@ public class LambdaOperationDao implements OperationDao {
 
     public LambdaOperationDao(Context applicationContext, SharedPreferences settings) {
         this.applicationContext = applicationContext;
-        this.cognitoPoolId = settings.getString(COGNITO_POOL, "nocognito");
+        this.cognitoPoolId = settings.getString(COGNITO_POOL, "no_cognito_id");
     }
 
     @Override
@@ -44,36 +44,52 @@ public class LambdaOperationDao implements OperationDao {
         return callSynchronously(factory, transaction);
     }
 
-    private OperationResult callSynchronously(LambdaInvokerFactory invokerFactory, Operation operation) {
-        try {
-            Log.i(TAG, String.format("Calling with operation %s", operation.toString()));
-            AddOperation myInterface = invokerFactory.build(AddOperation.class);
-            OperationResult operationResult = myInterface.addOperation(operation);
-            Log.i(TAG, String.format("Call result %s", operationResult.toString()));
-            return operationResult;
-        } catch (Exception e) {
-            Log.e(TAG, e.getMessage());
-            throw new RuntimeException(e);
-        }
+    @Override
+    public void saveOperationAsync(Operation operation, OperationResultListener listener) {
+        Log.i(TAG, "Will call lambda with cognitopoolid="+this.cognitoPoolId);
+        CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
+                getApplicationContext(),
+                this.cognitoPoolId,
+                Regions.EU_CENTRAL_1 // Region
+        );
+        LambdaInvokerFactory factory = new LambdaInvokerFactory(
+                this.getApplicationContext(),
+                Regions.EU_CENTRAL_1,
+                credentialsProvider);
+
+        callASynchronously(factory, operation, listener);
+
     }
 
-    private String callASynchronously(LambdaInvokerFactory invokerFactory, Operation operation) {
+    private OperationResult callSynchronously(LambdaInvokerFactory invokerFactory, Operation operation) {
+        Log.i(TAG, String.format("Calling with operation %s", operation.toString()));
+        AddOperation myInterface = invokerFactory.build(AddOperation.class);
+        OperationResult operationResult = myInterface.addOperation(operation);
+        Log.i(TAG, String.format("Call result %s", operationResult.toString()));
+        return operationResult;
+    }
+
+    private void callASynchronously(LambdaInvokerFactory invokerFactory, Operation operation, OperationResultListener listener) {
         AddOperation myInterface = invokerFactory.build(AddOperation.class);
 
-        AsyncTask<Double, Void, String> asyncTask = new AsyncTask<Double, Void, String>() {
+        AsyncTask<Operation, Void, OperationResult> asyncTask = new AsyncTask<Operation, Void, OperationResult>() {
             @Override
-            protected String doInBackground(Double... params) {
+            protected OperationResult doInBackground(Operation... params) {
                 try {
-//                    return myInterface.addOperation(params[0],params[1],params[2]);
-                    throw new RuntimeException("not yet implemented");
+                    return myInterface.addOperation(params[0]);
                 } catch (LambdaFunctionException lfe) {
                     Log.e(TAG, "Failed to invoke echo", lfe);
-                    return null;
                 }
+                return null;
             }
-        };
-
-        return "";
+            @Override
+            protected void onPostExecute(OperationResult result) {
+                if (result == null) {
+                    return;
+                }
+                listener.onResult(result);
+            }
+        }.execute(operation);
     }
 
 
