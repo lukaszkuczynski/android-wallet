@@ -1,6 +1,8 @@
 package pl.integrator.androidwallet;
 
 import android.Manifest;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
@@ -14,6 +16,7 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Spinner;
+import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -39,8 +42,6 @@ public class MainActivity extends AppCompatActivity implements OperationResultLi
 
         final EditText amountEdit = (EditText) findViewById(R.id.amount);
 
-        final Spinner spinner = (Spinner) findViewById(R.id.spinner);
-
 
         String[] tags = new String[]{
                 "shopping",
@@ -60,7 +61,6 @@ public class MainActivity extends AppCompatActivity implements OperationResultLi
                 this, R.layout.support_simple_spinner_dropdown_item, tagList);
 
         spinnerArrayAdapter.setDropDownViewResource(R.layout.support_simple_spinner_dropdown_item);
-        spinner.setAdapter(spinnerArrayAdapter);
 
 
 //        if (ContextCompat.checkSelfPermission(this,
@@ -89,13 +89,30 @@ public class MainActivity extends AppCompatActivity implements OperationResultLi
 //            }
 //        }
 
+        TextView tagsText;
+        tagsText = (TextView) findViewById(R.id.tags);
+        final List<String> selectedTags = new ArrayList<>();
+        tagsText.setOnClickListener((View view) -> {
+            AlertDialog.Builder builderSingle = new AlertDialog.Builder(MainActivity.this);
+            builderSingle.setTitle("dialog");
+            builderSingle.setItems(tags, new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialogInterface, int i) {
+                    String text = tagList.get(i);
+                    selectedTags.add(text);
+                    tagsText.setText(text);
+                }
+            }).create();
+            builderSingle.show();
+        });
+
         button.setOnClickListener((View view) -> {
 
             double amount = Double.valueOf(amountEdit.getText().toString());
-            String tag = spinner.getSelectedItem().toString();
-            operationDao.saveOperationAsync(new Operation(amount, tag, null), this);
+            String tag = selectedTags.get(0);
             String snackText = String.format("Adding operation '%s' with amount of %.2f. ", tag, amount);
             Snackbar.make(view, snackText, Snackbar.LENGTH_INDEFINITE);
+            operationDao.saveOperationAsync(new Operation(amount, tag, null), this);
 
         });
 

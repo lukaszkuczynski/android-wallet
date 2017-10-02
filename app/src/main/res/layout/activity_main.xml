@@ -29,10 +29,13 @@
         android:layout_height="0dp"
         android:layout_weight="1">
 
-        <Spinner
-            android:id="@+id/spinner"
+        <TextView
+            android:id="@+id/tags"
+            android:text="@string/default_description"
+            android:textColor="@color/colorPrimary"
+            android:textSize="30dp"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+            android:layout_height="match_parent" />
     </FrameLayout>
     <FrameLayout
         android:id="@+id/content_buttons"

@@ -4,7 +4,7 @@
     <string name="title_dashboard">Dashboard</string>
     <string name="title_notifications">Notifications</string>
 
-    <string name="default_amount">0.00</string>
+    <string name="default_amount">0</string>
     <string name="default_description">spending</string>
     <string name="save_button">Save</string>
 </resources>
