@@ -15,6 +15,7 @@ import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ProgressBar;
 import android.widget.Spinner;
 import android.widget.TextView;
 
@@ -106,16 +107,23 @@ public class MainActivity extends AppCompatActivity implements OperationResultLi
             builderSingle.show();
         });
 
+        TextView messageTextView = (TextView) findViewById(R.id.messageTextView);
+
         button.setOnClickListener((View view) -> {
+            ProgressBar progressBar = (ProgressBar) findViewById(R.id.progressBar1);
+            progressBar.setVisibility(View.VISIBLE);
+            messageTextView.setText("");
 
             double amount = Double.valueOf(amountEdit.getText().toString());
-            String tag = selectedTags.get(0);
+            String tag = tagsText.getText().toString();
             String snackText = String.format("Adding operation '%s' with amount of %.2f. ", tag, amount);
             Snackbar.make(view, snackText, Snackbar.LENGTH_INDEFINITE);
             operationDao.saveOperationAsync(new Operation(amount, tag, null), this);
 
         });
 
+        ProgressBar progressBar = (ProgressBar) findViewById(R.id.progressBar1);
+        progressBar.setVisibility(View.GONE);
 
     }
 
@@ -123,6 +131,11 @@ public class MainActivity extends AppCompatActivity implements OperationResultLi
     public void onResult(OperationResult operationResult) {
         Log.i(TAG, String.format("Result came from Lambda! Amount after %s", operationResult.getAmount_after()));
         String snackText = String.format("After operation the new balance is %s", operationResult.getAmount_after());
+        ProgressBar progressBar = (ProgressBar) findViewById(R.id.progressBar1);
+        progressBar.setVisibility(View.GONE);
+        TextView messageTextView = (TextView) findViewById(R.id.messageTextView);
+        messageTextView.setText(snackText);
+
 //        Snackbar.make(this.findViewById(R.id.save) , snackText, Snackbar.LENGTH_INDEFINITE);
 
     }
