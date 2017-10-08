@@ -37,6 +37,7 @@ public class CategoryInSettingsDao implements CategoryDao {
             categories = this.sharedPreferences.getStringSet(CATEGORIES_PREFERENCES_KEY, new HashSet<>());
         }
         ArrayList<String> list = new ArrayList<>();
+        list.add("new");
         list.addAll(categories);
         return list;
     }

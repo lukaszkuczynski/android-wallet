@@ -6,10 +6,12 @@ import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.text.InputType;
 import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
@@ -23,20 +25,27 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static android.R.id.input;
 
 
 public class MainActivity extends AppCompatActivity implements OperationResultListener {
 
     private static final String TAG = MainActivity.class.getCanonicalName();
-    private OperationDao operationDao;
 
     public static final String PREFS_NAME = "AwsWalletPrefsFile";
+    private OperationDao operationDao;
+    private CategoryDao categoryDao;
+    private String newCategoryText;
+
     public static final String COGNITO_POOL = "COGNITO_POOL_ID";
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         this.operationDao = new LambdaOperationDao(this.getApplicationContext(), this.getSharedPreferences(PREFS_NAME, 0));
+        this.categoryDao = new CategoryInSettingsDao(this.getSharedPreferences(PREFS_NAME, 0));
         setContentView(R.layout.activity_main);
 
         Button button = (Button) findViewById(R.id.save);
@@ -44,24 +53,13 @@ public class MainActivity extends AppCompatActivity implements OperationResultLi
         final EditText amountEdit = (EditText) findViewById(R.id.amount);
 
 
-        String[] tags = new String[]{
-                "shopping",
-                "gasoline"
-        };
-
 //        SharedPreferences settings = getSharedPreferences(PREFS_NAME, 0);
 //        hardcode your cognito id
 //        SharedPreferences.Editor editor = settings.edit();
 //        editor.putString(COGNITO_POOL, "YOUR_POOL_ID_HERE");
 //        editor.commit();
 
-        final List<String> tagList = new ArrayList<>(Arrays.asList(tags));
-
-        // Initializing an ArrayAdapter
-        final ArrayAdapter<String> spinnerArrayAdapter = new ArrayAdapter<>(
-                this, R.layout.support_simple_spinner_dropdown_item, tagList);
-
-        spinnerArrayAdapter.setDropDownViewResource(R.layout.support_simple_spinner_dropdown_item);
+        final List<String> tagList = getCategoriesAndRefreshSpinner();
 
 
 //        if (ContextCompat.checkSelfPermission(this,
@@ -91,17 +89,46 @@ public class MainActivity extends AppCompatActivity implements OperationResultLi
 //        }
 
         TextView tagsText;
+
+
         tagsText = (TextView) findViewById(R.id.tags);
         final List<String> selectedTags = new ArrayList<>();
         tagsText.setOnClickListener((View view) -> {
+
+            AlertDialog.Builder builderNewCategory = new AlertDialog.Builder(MainActivity.this);
+            builderNewCategory.setTitle("new category");
+            final EditText newCategoryInput = new EditText(this);
+            newCategoryInput.setInputType(InputType.TYPE_CLASS_TEXT);
+            builderNewCategory.setView(newCategoryInput);
+            builderNewCategory.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    newCategoryText = newCategoryInput.getText().toString();
+                    categoryDao.addCategory(newCategoryText);
+                    tagsText.setText(newCategoryText);
+                    getCategoriesAndRefreshSpinner();
+                }
+            });
+            builderNewCategory.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    dialog.cancel();
+                }
+            });
+            AlertDialog newCategoryDialog = builderNewCategory.create();
+
             AlertDialog.Builder builderSingle = new AlertDialog.Builder(MainActivity.this);
             builderSingle.setTitle("dialog");
-            builderSingle.setItems(tags, new DialogInterface.OnClickListener() {
+            builderSingle.setItems(tagList.toArray(new CharSequence[tagList.size()]), new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialogInterface, int i) {
                     String text = tagList.get(i);
-                    selectedTags.add(text);
-                    tagsText.setText(text);
+                    if (text.equals("new")) {
+                        newCategoryDialog.show();
+                    } else {
+                        selectedTags.add(text);
+                        tagsText.setText(text);
+                    }
                 }
             }).create();
             builderSingle.show();
@@ -125,6 +152,15 @@ public class MainActivity extends AppCompatActivity implements OperationResultLi
         ProgressBar progressBar = (ProgressBar) findViewById(R.id.progressBar1);
         progressBar.setVisibility(View.GONE);
 
+    }
+
+    @NonNull
+    private List<String> getCategoriesAndRefreshSpinner() {
+        final List<String> tagList = categoryDao.findAll();
+        final ArrayAdapter<String> spinnerArrayAdapter = new ArrayAdapter<>(
+                this, R.layout.support_simple_spinner_dropdown_item, tagList);
+        spinnerArrayAdapter.setDropDownViewResource(R.layout.support_simple_spinner_dropdown_item);
+        return tagList;
     }
 
     @Override
