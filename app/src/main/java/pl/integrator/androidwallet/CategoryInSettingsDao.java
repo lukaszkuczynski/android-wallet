@@ -1,6 +1,8 @@
 package pl.integrator.androidwallet;
 
+import android.content.Context;
 import android.content.SharedPreferences;
+import android.preference.PreferenceManager;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -21,8 +23,8 @@ public class CategoryInSettingsDao implements CategoryDao {
 
     private final static String CATEGORIES_PREFERENCES_KEY = "CATEGORIES";
 
-    public CategoryInSettingsDao(SharedPreferences sharedPreferences) {
-        this.sharedPreferences = sharedPreferences;
+    public CategoryInSettingsDao(Context context) {
+        this.sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
     }
 
     @Override
@@ -30,6 +32,7 @@ public class CategoryInSettingsDao implements CategoryDao {
         Set<String> categories = this.sharedPreferences.getStringSet(CATEGORIES_PREFERENCES_KEY, new HashSet<>());
         if (categories.size() == 0) {
             SharedPreferences.Editor editor = this.sharedPreferences.edit();
+            editor.clear();
             Set<String> defaultCategoriesSet = new HashSet<>();
             defaultCategoriesSet.addAll(Arrays.asList(DEFAULT_CATEGORIES));
             editor.putStringSet(CATEGORIES_PREFERENCES_KEY, defaultCategoriesSet);
@@ -61,8 +64,10 @@ public class CategoryInSettingsDao implements CategoryDao {
             throw new RuntimeException("Category "+name+" already exists.");
         }
         SharedPreferences.Editor editor = this.sharedPreferences.edit();
+        editor.clear();
         categories.add(name);
         editor.putStringSet(CATEGORIES_PREFERENCES_KEY, categories);
+        editor.apply();
         editor.commit();
     }
 }

@@ -45,7 +45,7 @@ public class MainActivity extends AppCompatActivity implements OperationResultLi
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         this.operationDao = new LambdaOperationDao(this.getApplicationContext(), this.getSharedPreferences(PREFS_NAME, 0));
-        this.categoryDao = new CategoryInSettingsDao(this.getSharedPreferences(PREFS_NAME, 0));
+        this.categoryDao = new CategoryInSettingsDao(this.getApplicationContext());
         setContentView(R.layout.activity_main);
 
         Button button = (Button) findViewById(R.id.save);

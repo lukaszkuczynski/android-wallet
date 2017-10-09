@@ -26,8 +26,7 @@ public class CategoryInSettingsDaoTest {
     @Before
     public void setUp() {
         Context appContext = InstrumentationRegistry.getTargetContext();
-        SharedPreferences preferences = appContext.getApplicationContext().getSharedPreferences(MainActivity.PREFS_NAME, 0);
-        sut = new CategoryInSettingsDao(preferences);
+        sut = new CategoryInSettingsDao(appContext);
     }
 
     @Test
